@@ -1,0 +1,12 @@
+- name: flutter
+  shell:  
+    git clone -b beta https://github.com/flutter/flutter.git $HOME/.local/share/flutter
+    echo -n "export PATH=$HOME/.local/share/flutter/bin:$PATH" >> $HOME/.bashrc
+    echo -n "export PATH=$HOME/.local/share/flutter/bin:$PATH" >> $HOME/.zshrc
+    echo -n "set -Ux PATH $HOME/.local/share/flutter/bin $PATH" >> $HOME/.config/fish/config.fish
+    flutter doctor
+    yes | flutter doctor --android-licenses
+    flutter web --enable
+
+
+    

@@ -1,0 +1,5 @@
+- name: gofish install
+  shell: curl -fsSL https://raw.githubusercontent.com/fishworks/gofish/master/scripts/install.sh | bash
+
+- name: Glooctl install
+  shell: gofish install glooctl

@@ -1,0 +1,17 @@
+#
+# some roles are commented out by default. uncomment them to install
+#
+- hosts: all
+  roles:
+    - common
+    - oh-my-zsh
+    - kube-tools
+    - minikube
+    - golang
+    - gcloud-sdk
+    - vscode
+    - docker-ce
+    - googlechrome
+    - android-studio
+    - gofish
+    - flutter

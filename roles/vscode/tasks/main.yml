@@ -1,0 +1,74 @@
+- name: Install required packages
+  apt:
+    update_cache: yes
+    pkg:
+      - libasound2
+  become: yes
+
+- name: Import signing key into apt
+  apt_key:
+    url: "https://packages.microsoft.com/keys/microsoft.asc"
+    state: present
+  become: yes
+
+- name: Add APT repository
+  apt_repository:
+    repo: deb https://packages.microsoft.com/repos/vscode stable main
+    filename: vscode
+    state: present
+  become: yes
+
+- name: Install VSCode from APT repository
+  apt:
+    update_cache: yes
+    pkg:
+      - code
+  become: yes
+
+- name: Install VSCode extensions
+  command: code --install-extension {{ item }}
+  ignore_errors: yes
+  register: vscode_result
+  changed_when: "'already installed' not in vscode_result.stdout"
+  with_items:
+    - PeterJausovec.vscode-docker
+    - ms-vscode.go
+    - Dart-Code.flutter
+
+- name: add user settings on ubuntu
+  include: "{{ role_path }}/modules/jqInsertIntoObject.yml"
+  with_items:
+    - {
+        filePath: "$HOME/.config/Code/User/settings.json",
+        jqCommand: '."editor.formatOnSave"=true',
+      }
+    - {
+        filePath: "$HOME/.config/Code/User/settings.json",
+        jqCommand: '."eslint.autoFixOnSave"=true',
+      }
+    - {
+        filePath: "$HOME/.config/Code/User/settings.json",
+        jqCommand: '."eslint.alwaysShowStatus"=true',
+      }
+    - {
+        filePath: "$HOME/.config/Code/User/settings.json",
+        jqCommand: '."go.gopath"="/home/{{ ansible_env.USER }}/.cache/go:/home/{{ ansible_env.USER }}"',
+      }
+    - {
+        filePath: "$HOME/.config/Code/User/settings.json",
+        jqCommand: '."go.formatTool"="goimports"',
+      }
+    - {
+        filePath: "$HOME/.config/Code/User/settings.json",
+        jqCommand: '."files.watcherExclude"={"**/.git/objects/**":true,"**/.git/subtree-cache/**":true,"**/node_modules/*/**":true,"**/.history/**":true}',
+      }
+
+- name: increase max inotify watch limit
+  become: true
+  become_method: sudo
+  blockinfile:
+    dest: /etc/sysctl.conf
+    create: yes
+    marker: "# {mark} inotify limit (for vscode)"
+    block: |
+      fs.inotify.max_user_watches=524288

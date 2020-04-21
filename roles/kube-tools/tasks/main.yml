@@ -1,0 +1,57 @@
+- name: Download kubectl binary
+  get_url:
+    url: "https://storage.googleapis.com/kubernetes-release/release/{{ kubectl_version }}/bin/linux/amd64/kubectl"
+    dest: "{{ tools_path }}/kubectl"
+    mode: 0755
+
+- name: Download skaffold binary
+  get_url:
+    url: "https://storage.googleapis.com/skaffold/releases/{{ skaffold_version }}/skaffold-linux-amd64"
+    dest: "{{ tools_path }}/skaffold"
+    mode: 0755
+
+- name: Download and extract kustomize binary
+  unarchive:
+    src: "https://github.com/kubernetes-sigs/kustomize/releases/download/kustomize%2F{{ kustomize_version }}/kustomize_{{ kustomize_version }}_linux_amd64.tar.gz"
+    remote_src: yes
+    dest: "{{ tools_path }}"
+    creates: "{{ tools_path }}/kustomize"
+
+- name: create temporarily directory for krew
+  file:
+    path: ~/tmp/krew
+    state: directory
+
+- name: Download krew.tar.gz and krew.yaml
+  get_url:
+    url: "https://github.com/kubernetes-sigs/krew/releases/download/{{ krew_version }}/{{ item }}"
+    remote_src: yes
+    dest: ~/tmp/krew/{{ item }}
+  with_items:
+    - krew.tar.gz
+    - krew.yaml
+
+- name: Install krew
+  shell:
+    cmd: |
+      set -e
+      cd ~/tmp/krew
+      tar zxf krew.tar.gz
+      ./krew-linux_amd64 install --manifest=krew.yaml --archive=krew.tar.gz
+      ./krew-linux_amd64 update
+      cd ..
+    creates: ~/.krew/bin/kubectl-krew
+
+- name: Add .krew/bin to PATH in .zshrc
+  blockinfile:
+    destfile: ~/.zshrc
+    insertafter: EOF
+    marker: "# krew {mark} "
+    block: |
+      export PATH=$HOME/.krew/bin:$PATH
+
+- name: Download yq binary
+  get_url:
+    url: "https://github.com/mikefarah/yq/releases/download/{{ yq_version }}/yq_linux_amd64"
+    dest: ~/.local/bin/yq
+    mode: 0755
